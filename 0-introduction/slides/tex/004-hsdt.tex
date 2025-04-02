@@ -1,0 +1,223 @@
+\documentclass[aspectratio=169]{beamer}
+
+% Custom theme and packages
+\usepackage{beamertheme-custom}
+% Custom symbols and commands
+\usepackage{symbols-custom}
+
+% Specific packages for this lecture if needed
+% \usetikzlibrary{...}
+
+\title{Hierarchical Signal Detection Theory (HSDT)}
+\subtitle{Combining SDT and Hierarchical Models}
+\author{Joachim Vandekerckhove}
+\date{Winter 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Hierarchical SDT (HSDT)}
+
+\begin{frame}{The Need for HSDT in Cognitive Science}
+    \frametitle{HSDT: Why Combine Them?}
+    Applying classical SDT to typical cognitive science data (multiple participants, conditions) faces challenges:
+    \pause
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \textbf{1. Aggregated Analysis}\quad (Complete Pooling)\\
+            \small Sum counts across participants.
+            \begin{itemize}
+                \item[$\times$] Ignores individual differences.
+                \item[$\times$] Can mislead (Simpson\'s Paradox).
+                \item[$\times$] Violates SDT/Binomial assumptions.
+            \end{itemize}
+        \end{column}
+        \pause
+        \begin{column}{0.5\textwidth}
+            \textbf{2. Individual Analysis}\quad (No Pooling)\\
+            \small Calculate $d'$, $c$ per person.
+            \begin{itemize}
+                \item[$\times$] Unreliable with sparse data.
+                \item[$\times$] Extreme rates (0/1) $\implies$ infinite $d'$/$c$.
+                \item[$\times$] Needs ad-hoc corrections.
+                \item[$\times$] Inefficient (ignores population).
+                \item[$\times$] Hard to compare groups (noisy inputs).
+            \end{itemize}
+        \end{column}
+    \end{columns}
+    \pause
+    \vfill
+    \textbf{HSDT Solution:} Embed the SDT model within a hierarchical (often Bayesian) structure.
+    \begin{itemize}
+        \item Simultaneously estimate individual and population parameters.
+        \item Robust inference respecting data structure.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Formulation of Bayesian HSDT Models}
+    \frametitle{HSDT: Bayesian Formulation (Example)}
+    Assume $P$ participants, $K$ conditions.
+    \footnotesize % Smaller font for dense math
+    \begin{enumerate}
+        \item \textbf{Likelihood (Level 1a - Data):}
+            Binomial likelihood for Hits ($H_{pk}$) and False Alarms ($FA_{pk}$) for participant $p$ in condition $k$, given trial counts ($N_{S,pk}, N_{N,pk}$) and latent probabilities ($\theta_{H,pk}, \theta_{FA,pk}$):
+            $ \qquad H_{pk} \sim \text{Binomial}(N_{S, pk}, \theta_{H, pk}) $\\[-1ex]
+            $ \qquad FA_{pk} \sim \text{Binomial}(N_{N, pk}, \theta_{FA, pk}) $
+        \pause
+        \item \textbf{SDT Link (Level 1b - Transformation):}
+            Link probabilities to participant-condition SDT parameters ($d'_{pk}, c_{pk}$) via standard normal CDF $
+ormalCDF{}$ (assuming equal-variance Gaussian SDT):
+            $ \qquad \theta_{H, pk} = 
+ormalCDF{d'_{pk}/2 - c_{pk}} $\\[-1ex]
+            $ \qquad \theta_{FA, pk} = 
+ormalCDF{-d'_{pk}/2 - c_{pk}} $
+        \pause
+        \item \textbf{Individual Parameters (Level 2 - Random Effects):}
+            Individual parameters ($d'_{pk}, c_{pk}$) drawn from condition-specific population distributions:
+            $ \qquad d'_{pk} \sim \mathcal{N}(\mu_{d'_k}, \sigma^2_{d'_k}) $\\[-1ex]
+            $ \qquad c_{pk} \sim \mathcal{N}(\mu_{c_k}, \sigma^2_{c_k}) $\\[-0.5ex]
+            (Optionally, use Multivariate Normal for correlation $\rho_{dc,k}$)
+        \pause
+        \item \textbf{Population Parameters (Level 3 - Fixed Effects / Predictors):}
+            Model the condition means ($\mu_{d'_k}, \mu_{c_k}$) and standard deviations ($\sigma_{d'_k}, \sigma_{c_k}$). Can be estimated per condition or modeled (e.g., via regression):
+            $ \qquad \mu_{d'_k} = \beta_{0d} + \beta_{1d} \times \text{Predictor}_k + ... $\\[-1ex]
+            $ \qquad \mu_{c_k} = \beta_{0c} + \beta_{1c} \times \text{Predictor}_k + ... $
+        \pause
+        \item \textbf{Hyperpriors:}
+            Priors on all top-level parameters (e.g., $\beta$\'s, or $\mu$\'s, $\sigma$\'s if Level 3 is simpler). \emph{Crucially}, use good priors for Level 2 $\sigma$\'s (e.g., Half-Normal(0, 1)).
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Advantages in Practice}
+    \frametitle{HSDT: Advantages}
+    \begin{itemize}
+        \item \textbf{Handles Extreme Rates Gracefully:}
+            Bayesian estimation with priors naturally handles HR/FAR of 0 or 1 without ad-hoc corrections. Posterior estimates remain finite and interpretable.
+        \pause
+        \item \textbf{Improved Precision:}
+            Partial pooling leads to more precise and stable estimates of both individual and group-level parameters.
+        \pause
+        \item \textbf{Quantifies Individual Differences:}
+            Directly estimates the magnitude of between-participant variability ($\sigma_{d'}$, $\sigma_{c}$) and how it might differ across conditions.
+        \pause
+        \item \textbf{Unified Inference:}
+            Simultaneous inference on individual effects, group averages, condition differences, and variability within one coherent model.
+        \pause
+        \item \textbf{Model Flexibility \& Comparison:}
+            Easily incorporates covariates (e.g., age). Principled comparison of different SDT assumptions (e.g., equal vs. unequal variance) or hierarchical structures using Bayesian tools (PPCs, LOO-CV).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Implementation Considerations}
+    \frametitle{HSDT: Implementation Tips}
+    \begin{itemize}
+        \item \textbf{Parameterization:}
+                    Be clear about the definition of $c$ (relative vs. absolute). While $(d', c)$ is standard, others exist.
+        \pause
+        \item \textbf{Priors:}
+                    Choice of priors, \emph{especially for variance components ($\sigma$\'s)}, matters. Affects shrinkage. Use weakly informative priors (e.g., Half-Normal, Half-Cauchy) informed by domain knowledge and perform sensitivity analysis.
+        \pause
+        \item \textbf{Sampling Efficiency (Non-Centered Parameterization):}\quad \textbf{Often Essential!}
+            Improves MCMC performance drastically, especially needed if group variances ($\sigma$\'s) might be small.
+            \begin{itemize}
+                \item Instead of: $d'_{pk} \sim \mathcal{N}(\mu_{d'_k}, \sigma^2_{d'_k})$
+                \item Use: $z_{d', pk} \sim \mathcal{N}(0, 1)$ and define $d'_{pk} = \mu_{d'_k} + z_{d', pk} \times \sigma_{d'_k}$.
+                \item (Similarly for $c_{pk}$)
+                \item Decouples individual effects from group parameters in sampling.
+            \end{itemize}
+        \pause
+        \item \textbf{Model Checking:}\quad \textbf{Critical!}
+            \begin{itemize}
+                \item MCMC diagnostics ($\hat{R}$, ESS, divergences, trace plots).
+                \item Posterior Predictive Checks (PPCs): Do simulated datasets look like the real data (e.g., distribution of HR/FAR)?
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Interpreting HSDT Results}
+    \frametitle{HSDT: Interpretation}
+    Focus on posterior distributions of key parameters:
+    \begin{itemize}
+        \item \textbf{Population Averages (e.g., $\mu_{d'_k}, \mu_{c_k}$ or $\beta$\'s):}
+            Estimated average sensitivity/bias in each condition. Credible differences between conditions (e.g., posterior of $\mu_{d'_1} - \mu_{d'_2}$).
+        \pause
+        \item \textbf{Population Variability (e.g., $\sigma_{d'_k}, \sigma_{c_k}$):}
+            How much do individuals typically differ? Is variability different across conditions?
+        \pause
+        \item \textbf{Individual Estimates (e.g., posterior mean/median of $d'_{pk}, c_{pk}$):}
+            Best estimates for specific individuals/conditions (reflecting shrinkage). More reliable than non-hierarchical estimates, especially with sparse data.
+        \pause
+        \item \textbf{Correlations (e.g., $\rho_{dc,k}$):}
+            Systematic relationship between sensitivity and bias across participants?
+        \pause
+        \item \textbf{Covariate Effects:}
+            How do covariates (if included) relate to performance or individual differences?
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{HSDT Analysis Example Output}
+    \frametitle{HSDT: Example Analysis Output}
+    Hierarchical Bayesian models allow rich visualization of results.
+    \medskip
+    (Example plots below would be generated from running models like `src/sdt/hierarchical.py` or `src/sdt/full.py`)
+    \pause
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \textbf{Population Parameters:}
+            \begin{itemize}
+                \item Posterior distributions for group means (e.g., $\mu_{d'}$, $\mu_c$).
+                \item Posterior distributions for group SDs (e.g., $\sigma_{d'}$, $\sigma_c$).
+                \item Posterior for difference between conditions.
+            \end{itemize}
+            \centering
+            \fbox{\parbox{0.9\linewidth}{\centering Placeholder:\\ Posterior plot for $\mu_{d'}$}} \\ \medskip
+            \fbox{\parbox{0.9\linewidth}{\centering Placeholder:\\ Posterior plot for $\sigma_{d'}$}}
+        \end{column}
+        \pause
+        \begin{column}{0.5\textwidth}
+            \textbf{Individual Parameters:}
+            \begin{itemize}
+                \item Forest plots showing individual participant estimates (e.g., $d'_p$, $c_p$) with uncertainty intervals.
+                \item Demonstrates shrinkage towards the group mean.
+            \end{itemize}
+            \centering
+            \fbox{\parbox{0.9\linewidth}{\centering Placeholder:\\ Forest plot for individual $d'_p$}}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+
+\begin{frame}[allowframebreaks]{Key References}
+    \frametitle{HSDT: Key References}
+    \footnotesize
+    \begin{itemize}
+        \item Lee, M. D., \& Wagenmakers, E.-J. (2013). \textit{Bayesian Cognitive Modeling: A Practical Course}. Cambridge University Press. \textit{(Provides clear explanations and code examples for HSDT, highly recommended).}
+        \item Rouder, J. N., \& Lu, J. (2005). An introduction to Bayesian hierarchical models with an application in the theory of signal detection. \textit{Psychonomic Bulletin \& Review}, \textit{12}(4), 573–604. \textit{(The foundational paper clearly motivating and outlining the HSDT approach).}
+        \item Kruschke, J. K. (2014). \textit{Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and Stan} (2nd ed.). Academic Press. \textit{(Provides the general Bayesian hierarchical framework and techniques applicable here).}
+        \item DeCarlo, L. T. (2010). The analysis of signal detection data using a hierarchical Bayesian random-coefficient model. \textit{British Journal of Mathematical and Statistical Psychology}, \textit{63}(Pt 1), 69–95. \textit{(Focuses on random-coefficient modeling for SDT).}
+        \item Morey, R. D., Rouder, J. N., Verhagen, J., \& Wagenmakers, E. J. (2008). Computation tool for fitting hierarchical signal detection models. \textit{Behavior Research Methods}, \textit{40}(1), 9-14. \textit{(Discusses software implementation).}
+        \item Wright, D. B., Horry, R., \& Skagerberg, E. M. (2009). Functions for traditional and multilevel approaches to signal detection theory. \textit{Behavior Research Methods}, \textit{41}(1), 1-10. \textit{(Discusses practical calculation and multilevel aspects).}
+        \item See also references from Hierarchical Modeling lecture.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion}
+    The integration of SDT and hierarchical modeling represents a mature and powerful approach for analyzing decision-making data with individual differences and complex structures.
+    \pause
+    \textbf{Key Takeaways:}
+    \begin{enumerate}
+        \item \textbf{Theoretical Depth:} SDT decomposes performance into sensitivity and bias.
+        \item \textbf{Statistical Rigor:} Hierarchical models handle non-independence via partial pooling.
+        \item \textbf{HSDT Synergy:} Principled study of individual/group differences in SDT parameters.
+        \item \textbf{Bayesian Advantages:} Coherent uncertainty, computation (MCMC), model checking/comparison.
+        \item \textbf{Practical Relevance:} Essential for analyzing typical psychology data, providing reliable and interpretable results.
+    \end{enumerate}
+    \pause
+    \vfill
+    Mastery of HSDT allows asking more sophisticated questions and drawing robust conclusions about perception, memory, and decision-making.
+\end{frame}
+
+\maketitle
+
+\end{document} 

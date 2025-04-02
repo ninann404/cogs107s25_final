@@ -1,0 +1,278 @@
+\documentclass[aspectratio=169]{beamer}
+
+% Custom theme and packages
+\usepackage{beamertheme-custom}
+% Custom symbols and commands
+\usepackage{symbols-custom}
+
+% Specific packages for this lecture if needed
+% \usetikzlibrary{...}
+
+\title{Hierarchical (Multilevel) Modeling}
+\subtitle{Structure and Inference}
+\author{Joachim Vandekerckhove}
+\date{Winter 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Hierarchical Modeling}
+
+\begin{frame}{Core Idea: Modeling Structure}
+    \frametitle{Hierarchical Modeling: Core Idea}
+    A statistical framework for data with \textbf{dependencies} from \textbf{group structure} or \textbf{repeated measures}.
+    \pause
+    \begin{itemize}
+        \item Examples: Students in classrooms, patients in hospitals, trials within participants, stimuli within conditions.
+        \item Observations within the same group are typically correlated (non-independent).
+        \item Standard methods (like OLS) assume independence, leading to issues.
+    \end{itemize}
+    \pause
+    \vfill
+    Addresses limitations of simpler approaches:
+    \begin{columns}[T] % Align tops
+        \begin{column}{0.5\textwidth}
+            \textbf{Complete Pooling}\quad (Ignore Structure)\\
+            \small Analyze all data together.
+            \begin{itemize}
+                \item[$\times$] Underestimates errors.
+                \item[$\times$] Hides group differences (Ecological Fallacy).
+                \item[$\times$] Doesn\'t quantify group variability.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \textbf{No Pooling}\quad (Separate Analyses)\\
+            \small Analyze each group separately.
+            \begin{itemize}
+                \item[$\times$] Ignores group similarities.
+                \item[$\times$] Inefficient.
+                \item[$\times$] Noisy estimates (esp. small groups).
+                \item[$\times$] Hard to generalize.
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{The Compromise: Partial Pooling}
+    \frametitle{Hierarchical Modeling: Partial Pooling}
+    Hierarchical models provide a statistically principled compromise:
+    \medskip
+    \centering
+    \large\textbf{Partial Pooling}\par
+    \medskip
+    \pause
+    \begin{itemize}
+        \item Information is \emph{adaptively shared} across groups.
+        \pause
+        \item \emph{"Borrow strength"}: Groups inform each other.
+        \pause
+        \item Improves individual group estimates (especially for noisy/small groups).
+        \pause
+        \item Simultaneously estimates population-level effects \emph{and} the extent of variation between groups.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Statistical Rationale: Varying Intercepts}
+    \frametitle{Hierarchical Model: Formulation (Varying Intercepts)}
+    Let $y_{ij}$ be outcome for observation $i$ in group $j$, $x_{ij}$ a predictor.
+    \pause
+    \textbf{Model Structure:}
+    \begin{itemize}
+        \item \textbf{Level 1 (Within-Group):}
+        \\[1ex]
+          $ \qquad y_{ij} = \alpha_j + \beta x_{ij} + \epsilon_{ij} $
+        \\[1ex]
+          where $\epsilon_{ij} \sim \mathcal{N}(0, \sigma^2_y)$ (Residual variance).
+        \\[1ex]
+          Here, the intercept $\alpha_j$ varies by group, but the slope $\beta$ is fixed (common).
+        \pause
+        \item \textbf{Level 2 (Between-Group):}
+        \\[1ex]
+          $ \qquad \alpha_j \sim \mathcal{N}(\mu_{\alpha}, \sigma^2_{\alpha}) $
+        \\[1ex]
+          The group intercepts ($\alpha_j$) are drawn from a population distribution.
+        \\[1ex]
+          \begin{itemize}
+            \item $\mu_{\alpha}$: Population average intercept.
+            \item $\sigma^2_{\alpha}$: Variance of intercepts across groups.
+          \end{itemize}
+    \end{itemize}
+    \pause
+    \vfill
+    This structure explicitly models the dependency within groups.
+\end{frame}
+
+\begin{frame}[fragile]{Statistical Rationale: Varying Slopes}
+    \frametitle{Hierarchical Model: Formulation (Varying Slopes)}
+    We can also allow the slope ($\beta_j$) to vary across groups.
+    \pause
+    \textbf{Model Structure:}
+    \begin{itemize}
+        \item \textbf{Level 1 (Within-Group):}
+        \\[1ex]
+          $ \qquad y_{ij} = \alpha_j + \beta_j x_{ij} + \epsilon_{ij} $, \quad $\epsilon_{ij} \sim \mathcal{N}(0, \sigma^2_y)$
+        \pause
+        \item \textbf{Level 2 (Between-Group):}
+        \\[1ex]
+          Intercepts $\alpha_j$ and slopes $\beta_j$ are drawn from a population distribution, often modeled as multivariate normal to capture potential correlation ($\rho$).
+        \\[2ex]
+          $ \qquad \begin{pmatrix} \alpha_j \\ \beta_j \end{pmatrix} \sim \mathcal{MVN} \left( \begin{pmatrix} \mu_{\alpha} \\ \mu_{\beta} \end{pmatrix}, \mathbf{\Sigma} = \begin{pmatrix} \sigma^2_{\alpha} & \rho \sigma_{\alpha} \sigma_{\beta} \\ \rho \sigma_{\alpha} \sigma_{\beta} & \sigma^2_{\beta} \end{pmatrix} \right) $
+        \\[2ex]
+          \begin{itemize}
+            \item $\mu_{\alpha}, \mu_{\beta}$: Population average intercept and slope.
+            \item $\sigma^2_{\alpha}, \sigma^2_{\beta}$: Variance of intercepts and slopes across groups.
+            \item $\rho$: Correlation between intercepts and slopes across groups.
+          \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Terminology}
+    \frametitle{Hierarchical Modeling: Terminology}
+    \begin{description}[labelindent=1em,leftmargin=2em]
+        \item[Fixed Effects] Parameters assumed constant across all groups (e.g., common slope $\beta$) OR population-level means (e.g., $\mu_{\alpha}, \mu_{\beta}$). Represent average effects.
+        \pause
+        \item[Random Effects] Parameters allowed to vary across groups (e.g., group intercepts $\alpha_j$, group slopes $\beta_j$). Often conceptualized as group-specific \emph{deviations} from the fixed effect mean (e.g., $u_{0j} = \alpha_j - \mu_{\alpha}$). Capture heterogeneity.
+        \pause
+        \item[Variance Components] Parameters characterizing variability at different levels:
+        \begin{itemize}
+            \item Level 1: Residual variance $\sigma^2_y$.
+            \item Level 2: Random effect variances ($\sigma^2_{\alpha}, \sigma^2_{\beta}$) and their correlation/covariance ($\mathbf{\Sigma}$). Quantify the magnitude of group differences.
+        \end{itemize}
+    \end{description}
+\end{frame}
+
+\begin{frame}{Partial Pooling \& Shrinkage Explained}
+    \frametitle{Hierarchical Modeling: Partial Pooling / Shrinkage}
+    The estimate for a group-specific parameter (e.g., $\hat{\alpha}_j$) balances two sources of information:
+    \pause
+    \begin{enumerate}
+        \item Information from the group\'s own data (the \emph{no-pooling estimate}, $\hat{\alpha}_{j, \text{no pool}}$).
+        \item Information from the overall population distribution (the \emph{population mean estimate}, $\hat{\mu}_{\alpha}$).
+    \end{enumerate}
+    \pause
+    $ \qquad \hat{\alpha}_j \approx w_j \hat{\alpha}_{j, \text{no pool}} + (1-w_j) \hat{\mu}_{\alpha} $
+    \pause
+    The weight $w_j$ (or shrinkage factor) depends on precision:
+    \pause
+    $ \qquad w_j \approx \frac{\text{Precision of Group Estimate}}{\text{Precision of Group Estimate} + \text{Precision of Population Estimate}} = \frac{1 / \text{Var}(\hat{\alpha}_{j, \text{no pool}})}{1 / \text{Var}(\hat{\alpha}_{j, \text{no pool}}) + 1 / \sigma^2_{\alpha}} $
+    \pause
+    \begin{itemize}
+        \item $\text{Var}(\hat{\alpha}_{j, \text{no pool}})$ depends on group size $n_j$ and within-group variance $\sigma^2_y$.
+        \item Group estimates are \textbf{shrunk} towards the population mean.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Adaptive Shrinkage}
+    \frametitle{Hierarchical Modeling: Adaptive Shrinkage}
+    The amount of shrinkage is \emph{adaptive} and data-dependent:
+    \medskip
+    \textbf{More Shrinkage} (towards $\hat{\mu}_{\alpha}$) when:
+    \begin{itemize}
+        \item Group has \emph{less data} / noisy estimate (large $\text{Var}(\hat{\alpha}_{j, \text{no pool}})$).
+        \item Groups are very \emph{similar} (small between-group variance $\sigma^2_{\alpha}$).
+    \end{itemize}
+    \pause
+    \medskip
+    \textbf{Less Shrinkage} (estimate closer to group's own data) when:
+    \begin{itemize}
+        \item Group has \emph{more data} / precise estimate (small $\text{Var}(\hat{\alpha}_{j, \text{no pool}})$).
+        \item Groups are very \emph{dissimilar} (large between-group variance $\sigma^2_{\alpha}$).
+    \end{itemize}
+    \pause
+    \medskip
+    This adaptive regularization prevents overfitting and leads to better out-of-sample predictions compared to no-pooling or complete-pooling models.
+\end{frame}
+
+\begin{frame}[fragile]{Bayesian Implementation}
+    \frametitle{Hierarchical Modeling: Bayesian Approach}
+    Bayesian methods provide a natural framework:
+    \pause
+    \begin{itemize}
+        \item \textbf{Full Probability Model:} Specify the entire structure:
+        \begin{itemize}
+            \item Level 1 Likelihood: $P(\text{Data} | \text{Level 1 Params})$
+            \item Level 2 Priors: $P(\text{Level 1 Params} | \text{Level 2 Hyperparams})$
+            \item Hyperpriors: $P(\text{Level 2 Hyperparams})$
+        \end{itemize}
+        \pause
+        \item \textbf{Coherent Uncertainty:} Get full posterior distributions for \emph{all} parameters (fixed effects, random effects, variance components), naturally propagating uncertainty.
+        \pause
+        \item \textbf{Computation:} Modern MCMC (e.g., HMC/NUTS in Stan, PyMC) handles complex posteriors effectively.
+        \pause
+        \item \textbf{Prior Specification:} Requires care!
+        \begin{itemize}
+            \item Fixed Effects / Means ($\mu$\'s): Often weakly informative (e.g., wide Normal).
+            \item Variance Components ($\sigma$\'s): Crucial! Use weakly informative priors concentrated away from zero (e.g., Half-Normal, Half-Cauchy) to avoid issues.
+            \item Correlations ($\rho$\'s): LKJ priors are common for correlation matrices.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Model Checking \& Interpretation}
+    \frametitle{Hierarchical Modeling: Checking \& Interpretation}
+    Fitting is just the start! Rigorous checking is essential:
+    \pause
+    \begin{itemize}
+        \item \textbf{MCMC Convergence:} Check $\hat{R}$ (should be $\approx 1.0$), Effective Sample Size (ESS), trace plots.
+        \pause
+        \item \textbf{Prior Sensitivity Analysis:} Do results change much with different reasonable priors?
+        \pause
+        \item \textbf{Posterior Predictive Checks (PPCs):}
+        \begin{itemize}
+            \item Simulate data from the fitted model.
+            \item Compare simulated data distributions to observed data. Mismatches indicate model problems.
+        \end{itemize}
+        \pause
+        \item \textbf{Model Comparison:} Use LOO-CV (via PSIS-LOO) or WAIC to compare models (e.g., different random effects structures). Estimates out-of-sample prediction accuracy.
+    \end{itemize}
+    \pause
+    \vfill
+    \textbf{Interpretation:} Focus on population parameters ($\mu$\'s, fixed $\beta$\'s), magnitude of variation ($\sigma$\'s), and potentially shrunken group estimates ($\alpha_j$\'s, $\beta_j$\'s), always with uncertainty (posterior distributions / intervals).
+\end{frame}
+
+\begin{frame}[fragile]{Advanced Topics}
+    \frametitle{Hierarchical Modeling: Advanced Topics}
+    Briefly:
+    \begin{itemize}
+        \item \textbf{Crossed vs. Nested Random Effects:}
+        \begin{itemize}
+            \item Nested: Students in classrooms, classrooms in schools.
+            \item Crossed: Participants respond to multiple stimuli (random effects for participant AND stimulus, not nested).
+            \item Models can handle both.
+        \end{itemize}
+        \pause
+        \item \textbf{Generalized Linear Hierarchical Models (GLMMs):}
+        \begin{itemize}
+            \item For non-Gaussian outcomes (binary, count data).
+            \item Uses appropriate likelihoods (Binomial, Poisson) and link functions (logit, log).
+        \end{itemize}
+        \pause
+        \item \textbf{Non-Centered Parameterization (Reparameterization):}
+        \begin{itemize}
+            \item \emph{Crucial} for MCMC efficiency, especially with small group variances or sparse data.
+            \item Instead of $\alpha_j \sim \mathcal{N}(\mu_{\alpha}, \sigma^2_{\alpha})$...
+            \item ... use $z_j \sim \mathcal{N}(0, 1)$ and define $\alpha_j = \mu_{\alpha} + z_j \times \sigma_{\alpha}$.
+            \item Reduces posterior correlations between $\mu_{\alpha}$ and $\sigma_{\alpha}$, avoids "funnels".
+        \end{itemize}
+        \pause
+        \item \textbf{Multilevel Models for Longitudinal Data:} Analyzing change over time, often with time as a predictor, allowing individual differences in starting points (intercepts) and rates of change (slopes).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Key References}
+    \frametitle{Hierarchical Modeling: Key References}
+    \footnotesize
+    \begin{itemize}
+        \item Gelman, A., \& Hill, J. (2007). \textit{Data Analysis Using Regression and Multilevel/Hierarchical Models}. Cambridge University Press. \textit{(Highly influential, accessible introduction with code examples in R and BUGS).}
+        \item Gelman, A., et al. (2013). \textit{Bayesian Data Analysis} (3rd ed.). CRC Press. \textit{(The definitive reference for Bayesian statistics, extensive coverage of hierarchical models).}
+        \item McElreath, R. (2020). \textit{Statistical Rethinking: A Bayesian Course with Examples in R and Stan} (2nd ed.). CRC Press. \textit{(Outstanding conceptual exposition, focuses on intuition and causal interpretation using DAGs, excellent code examples).}
+        \item Snijders, T. A. B., \& Bosker, R. J. (2012). \textit{Multilevel Analysis: An Introduction to Basic and Advanced Multilevel Modeling} (2nd ed.). Sage. \textit{(Comprehensive coverage, primarily from a frequentist perspective).}
+        \item Pinheiro, J. C., \& Bates, D. M. (2000). \textit{Mixed-Effects Models in S and S-PLUS}. Springer. \textit{(Classic text on frequentist mixed-effects model implementation, particularly relevant for users of R\'s \texttt{lme4} package).}
+        \item B\"urkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using Stan. \textit{Journal of Statistical Software}, \textit{80}(1), 1-28. \textit{(Introduces a key R package for fitting complex Bayesian models).}
+    \end{itemize}
+\end{frame}
+
+\maketitle
+
+\end{document} 

@@ -1,0 +1,166 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage{beamertheme-custom}
+\usepackage{symbols-custom}
+
+% Custom theme and packages
+\usepackage{hyperref}
+\usepackage{amsmath, amssymb, bm, graphicx}
+\usepackage{xcolor,transparent}
+\usepackage{listings}
+\hypersetup{hidelinks}
+\usetikzlibrary{decorations.pathmorphing}
+
+% Configure listings for Python code
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    frame=tb,
+    rulecolor=\color{palegreen},
+    backgroundcolor=\color{paleyellow},
+    xleftmargin=2.5mm,
+    xrightmargin=2.5mm,
+    framexleftmargin=2.5mm,    % internal left padding
+    framexrightmargin=2.5mm,   % internal right padding
+    framesep=2.5mm,            % vertical padding (top and bottom)
+    numbers=none,
+    breaklines=true,
+    breakatwhitespace=true,
+    escapeinside={(*@}{@*)},
+    basicstyle=\ttfamily\scriptsize
+}
+
+\definecolor{paleyellow}{rgb}{0.98,0.98,0.9}
+\definecolor{brickred}{rgb}{0.8,0.2,0.2}
+\definecolor{palegreen}{rgb}{0.9,0.98,0.9}
+\renewcommand{\emph}[1]{\textcolor{red}{#1}}
+
+\title{Cognitive modeling}
+\author{Joachim Vandekerckhove}
+\date{Spring 2025}
+
+\begin{document}
+
+
+\maketitle
+\begin{frame}{Course Description}
+Topics in quantitative methods used in cognitive sciences research focusing on process models, model building, parameter estimation, and model evaluation. 
+
+Examples drawn from models and methods used in cognitive sciences research with practical examples.
+\end{frame}
+
+\begin{frame}{Tools}
+\textbf{Tools and Environment}:
+\begin{itemize}[<+->]
+    \item Docker Desktop
+    \item Ubuntu Linux environment
+    \item Python programming language
+\end{itemize}\pause
+Docker containers are safe sandboxes in which you can screw up your code or even your operating system.  Get in the habit of starting, stopping, destroying, and rebuilding them.
+\end{frame}
+
+
+\begin{frame}{Flipped Lectures}
+\begin{itemize}[<+->]
+\item[]
+\textbf{Recorded Lectures}:
+\begin{itemize}
+    \item Published Monday afternoons
+    \item Review before class time
+    \item Often in an Australian accent
+\end{itemize}
+\item[]
+\textbf{In-Person Meetings}:
+\begin{itemize}
+    \item Wednesdays, 4:00 PM--4:50 PM
+\end{itemize}
+\item[]
+\textbf{Virtual Meetings} (Optional):
+\begin{itemize}
+    \item Fridays, 4:00 PM--4:50 PM
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Assessment}
+\textbf{Approximately Weekly Assignments (50\%)}
+\begin{itemize}[<+->]
+    \item Mostly technical, implementations of models in python, etc.
+    \item Hurdle assignments -- you must pass to progress
+    \item Team work and helping each other is encouraged
+    \item Self graded!  You decide whether you have this hurdle under control
+\end{itemize}\pause
+\textbf{Project Assignments (50\%)}
+\begin{itemize}[<+->]
+    \item Done individually
+    \item Graded based on quality of code, appropriate modeling choices, accuracy of interpretation
+    \item One optional by end of Week 5, one required by end of Week 10
+    \item You will need all the skills from the hurdle assignments to complete the project assignments
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Assessment}
+\textbf{Submission Policy}:
+\begin{itemize}[<+->]
+    \item No late submissions (assignments due at noon on the due date)
+    \item GitHub snapshot taken at the deadline
+    \item Recommendation: Set an internal deadline a day earlier than the due date
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Key Philosophies: Collaboration and Figuring Stuff Out}
+
+\textbf{Hurdle assignments and collaboration}
+
+When you're stuck on something (e.g., getting a script to run), you \emph{have to try to solve} the problem all by yourself for an hour, but then when the hour is up you \emph{have to ask for help}. Failure to try wastes other people's time, failure to ask wastes your time.
+\pause
+
+Figuring things out on your own involves Googling for solutions or asking an AI and {experimenting and trying things out to see if they work}.
+\pause
+
+\emph{The experimental verification is really important! The AI often gets it wrong!}
+\pause
+
+Finding partial solutions from unverified sources, implementing them, and then conducting rigorous tests is a highly generalizable coding paradigm.
+
+\end{frame}
+
+
+
+\begin{frame}{Academic Dishonesty \& Resources }
+\textbf{Academic dishonesty policy}
+
+There is no tolerance for academic dishonesty or fraud. Any form of fraud designed to circumvent course policies will result in a failing grade. The professor makes no judgment calls regarding academic dishonesty. Any academic dishonesty, no matter how small, will be escalated to academic authorities.
+
+\textbf{Resources}
+\begin{itemize}
+\item
+\textbf{Disability Services}: {https://dsc.uci.edu/}{}
+\item
+\textbf{Academic Dishonesty}: {https://aisc.uci.edu/students/academic-integrity/index.php}{}
+\item
+\textbf{Copyright Policy}: {http://copyright.universityofcalifornia.edu/use/teaching.html}{}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{AI Policy}
+\begin{itemize}[<+->]
+    \item[]
+    \textbf{General AI Policy:}
+\begin{itemize}[<+->]
+    \item Use of tools like Copilot, ChatGPT, and generative AI is permitted.
+    \item AI is a productivity enhancer but not a substitute for knowing what you are doing.
+\end{itemize}
+\item[]\textbf{Rules}:
+\begin{enumerate}[<+->]
+    \item Students are individually responsible for all submissions.
+    \item Acknowledge use of reference works, websites, and AI tools in comments.
+\end{enumerate}
+\end{itemize}
+\end{frame}
+
+\maketitle
+
+\end{document}
