@@ -51,10 +51,11 @@ def build_model(data):
     pm.Model
         PyMC model for basic SDT
     """
+    # Create a model object that will contain all the variables and distributions
     with pm.Model() as model_basic:
         # --- Priors ---
         # Sensitivity (d'). Normal prior, often centered at 0.
-        # A standard deviation of 1.5 or 2 allows for a wide range of plausible values.
+        # Standard deviation of 2.0 and 0.5 imply uniform distributions on hit and false alarm rates.
         d_prime = pm.Normal('d_prime', mu=0.0, sigma=2.0)
 
         # Criterion (c). Normal prior, also often centered at 0.
