@@ -5,9 +5,6 @@ LABEL description="PyMC 5.21.1 CLI environment"
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
-# Set Python path to ensure user installs are preferred
-ENV PYTHONPATH="/home/jovyan/.local/lib/python3.12/site-packages:${PYTHONPATH}"
-ENV PATH="/home/jovyan/.local/bin:${PATH}"
 
 USER root
 
@@ -47,6 +44,10 @@ RUN echo "jovyan ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 # Switch to jovyan user
 USER jovyan
 WORKDIR /home/jovyan
+
+# Set Python path to ensure user installs are preferred
+ENV PYTHONPATH="/home/jovyan/.local/lib/python3.12/site-packages:${PYTHONPATH}"
+ENV PATH="/home/jovyan/.local/bin:${PATH}"
 
 # Create requirements.txt
 RUN <<EOF cat > requirements.txt
