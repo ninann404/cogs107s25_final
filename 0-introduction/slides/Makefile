@@ -27,13 +27,25 @@ SOURCES = $(wildcard $(TEX_DIR)/*.tex)
 # Replace TEX_DIR with PDF_DIR and .tex with .pdf
 PDFS = $(patsubst $(TEX_DIR)/%.tex,$(PDF_DIR)/%.pdf,$(SOURCES))
 
+# Define TeX source files (assuming you have others)
+TEX_FILES := $(wildcard tex/*.tex)
+# Convert TeX source files to PDF targets
+PDF_FILES := $(patsubst tex/%.tex,pdf/%.pdf,$(TEX_FILES))
+
+# Specific figures needed for 003-hierarchical.tex
+# Correct the filenames based on the python script
+# Add the new shrinkage and multilevel figures
+FIGS_003 := tex/figures/fig_003_prior.pdf tex/figures/fig_003_partial.pdf tex/figures/fig_003_shrinkage.pdf tex/figures/fig_003_multilevel.pdf
+
 # Phony targets (targets that don't represent files)
-.PHONY: all clean
+.PHONY: all clean watch
 
-# Default target: Build all PDFs
-all: $(PDFS)
+# Default target: Build all PDFs and necessary figures
+# The figure dependency is handled by the specific rule below
+all: $(PDF_FILES)
 
-# Rule to build a PDF from a .tex file
+# General rule to build a PDF from a .tex file
+# Remove $(FIGS_003) dependency from here
 $(PDF_DIR)/%.pdf: $(TEX_DIR)/%.tex $(TEX_DIR)/beamertheme-custom.sty $(TEX_DIR)/symbols-custom.sty
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(PDF_DIR)
@@ -55,6 +67,9 @@ $(PDF_DIR)/%.pdf: $(TEX_DIR)/%.tex $(TEX_DIR)/beamertheme-custom.sty $(TEX_DIR)/
 	@mv $(BUILD_DIR)/$(basename $(notdir $<)).pdf $@
 	@echo "Finished building $@"
 
+# Specific rule for 003-hierarchical.pdf to add figure dependency
+$(PDF_DIR)/003-hierarchical.pdf: $(FIGS_003)
+
 # Clean up build files
 clean:
 	@echo "Cleaning up build files..."
@@ -62,3 +77,18 @@ clean:
 
 # Add .PRECIOUS rule to keep intermediate files in .build if needed for debugging
 # .PRECIOUS: $(BUILD_DIR)/%.aux $(BUILD_DIR)/%.bbl $(BUILD_DIR)/%.blg
+
+# Watch for changes and recompile
+watch:
+	while inotifywait -e modify -r tex/* tex/figures/* scripts/*; do \
+		make all; \
+	done
+
+# Rule to generate figures for 003-hierarchical.tex
+# Update target names to match FIGS_003 variable
+$(FIGS_003): scripts/make_figures_003.py | tex/figures
+	python $<
+
+# Rule to create the figures directory (order-only prerequisite)
+tex/figures:
+	mkdir -p $@
