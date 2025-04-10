@@ -89,7 +89,7 @@ def build_model(data):
         sigma_d = pm.HalfNormal('sigma_d', sigma=1.0)
 
         # Prior for the mean criterion across participants
-        mu_c = pm.Normal('mu_c', mu=0.0, sigma=2.0)
+        mu_c = pm.Normal('mu_c', mu=0.0, sigma=0.5)
         # Prior for the standard deviation of criterion across participants
         sigma_c = pm.HalfNormal('sigma_c', sigma=1.0)
 

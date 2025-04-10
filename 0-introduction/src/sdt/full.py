@@ -73,67 +73,74 @@ def generate_sample_data():
     }
 
 def build_model(data):
-    """Build the conditional hierarchical SDT model
+    """Build the conditional hierarchical SDT model with a linear predictor for d'.
     
+    Assumes conditions are ordered and the effect on mean d' is linear.
+
     Parameters:
     -----------
     data : dict
-        Dictionary containing the observed data
+        Dictionary containing the observed data. Must include 'conditions' in order.
         
     Returns:
     --------
     pm.Model
-        PyMC model for conditional hierarchical SDT
+        PyMC model for conditional hierarchical SDT with linear d' effect.
     """
     coords = {
         "participant": data['participants'],
-        "condition": data['conditions']
+        "condition": data['conditions'] # Assumes this list is ordered e.g., ['Easy', 'Medium', 'Hard']
     }
 
-    # Reshape data for PyMC likelihood (needs to match dims)
-    # ArviZ works best if observed data has named dimensions matching coords
-    # We can provide data as DataFrames or xarrays, or ensure numpy arrays align
-    # with the order of dims specified in the likelihood.
-    # Here, hits_pk and fas_pk are already in (participant, condition) order.
+    # Map conditions to numeric values (0, 1, 2...) for the linear predictor
+    # Ensure the order matches the assumed linear progression
+    condition_numeric = np.arange(data['K'])
 
-    with pm.Model(coords=coords) as model_cond_hier:
-        # --- Group-Level Priors (per condition) ---
-        # Shape K (one value per condition)
-        mu_d_k = pm.Normal('mu_d_k', mu=0.0, sigma=2.0, dims="condition")
+    with pm.Model(coords=coords) as model_cond_hier_linear_d:
+        # --- Priors for d' linear effect ---
+        # Intercept: Mean d' for the first condition (index 0)
+        mu_d_intercept = pm.Normal('mu_d_intercept', mu=0.0, sigma=2.0)
+        # Slope: Constant change in mean d' between adjacent conditions
+        delta_d = pm.Normal('delta_d', mu=0.0, sigma=1.0) # Prior allows increase or decrease
+
+        # --- Priors for d' variability and criterion (remain the same) ---
+        # Allow standard deviation of d' to vary by condition
         sigma_d_k = pm.HalfNormal('sigma_d_k', sigma=1.0, dims="condition")
-        mu_c_k = pm.Normal('mu_c_k', mu=0.0, sigma=2.0, dims="condition")
+        # Criterion parameters are estimated independently per condition
+        mu_c_k = pm.Normal('mu_c_k', mu=0.0, sigma=0.5, dims="condition")
         sigma_c_k = pm.HalfNormal('sigma_c_k', sigma=1.0, dims="condition")
 
+        # --- Deterministic calculation of mu_d_k based on linear model ---
+        # Register numeric condition values as data for the model
+        condition_idx = pm.Data("condition_idx", condition_numeric, dims="condition", mutable=False)
+        # Calculate mean d' for each condition: intercept + slope * condition_index
+        mu_d_k = pm.Deterministic('mu_d_k', mu_d_intercept + delta_d * condition_idx, dims="condition")
+
         # --- Individual-Level Parameters (per participant, per condition) ---
-        # Shape (P, K)
-        # Individual d' values are drawn from the condition-specific group distribution
-        # PyMC handles the broadcasting: mu_d_k (shape K) and sigma_d_k (shape K)
-        # define the distribution for d_prime_pk (shape P, K)
+        # Individual d' values are drawn from the group distribution whose mean (mu_d_k)
+        # is now determined by the linear relationship across conditions.
         d_prime_pk = pm.Normal('d_prime_pk', mu=mu_d_k, sigma=sigma_d_k, dims=("participant", "condition"))
+        # Criterion is drawn as before
         criterion_pk = pm.Normal('criterion_pk', mu=mu_c_k, sigma=sigma_c_k, dims=("participant", "condition"))
 
-        # --- Deterministic Transformations ---
-        # Calculate HR and FAR for each participant in each condition
-        # Shape (P, K)
+        # --- Deterministic Transformations (remain the same) ---
         hr_D_pk = pm.Deterministic('hr_D_pk', Phi(d_prime_pk / 2 - criterion_pk), dims=("participant", "condition"))
         far_D_pk = pm.Deterministic('far_D_pk', Phi(-d_prime_pk / 2 - criterion_pk), dims=("participant", "condition"))
 
-        # --- Likelihood ---
-        # Binomial likelihood for each participant's hits and FAs in each condition
-        # Shape (P, K)
+        # --- Likelihood (remains the same) ---
         H_obs = pm.Binomial('H_obs',
-                          n=data['n_signal_pk'],          # Can be P x K array if N varies
-                          p=hr_D_pk,                     # Matrix of individual hit rates
-                          observed=data['hits_pk'],       # Matrix of observed hits
-                          dims=("participant", "condition"))  # Match dims order to observed data
+                          n=data['n_signal_pk'],
+                          p=hr_D_pk,
+                          observed=data['hits_pk'],
+                          dims=("participant", "condition"))
 
         FA_obs = pm.Binomial('FA_obs',
-                           n=data['n_noise_pk'],          # Can be P x K array if N varies
-                           p=far_D_pk,                    # Matrix of individual FA rates
-                           observed=data['fas_pk'],        # Matrix of observed FAs
-                           dims=("participant", "condition"))  # Match dims order to observed data
+                           n=data['n_noise_pk'],
+                           p=far_D_pk,
+                           observed=data['fas_pk'],
+                           dims=("participant", "condition"))
                            
-    return model_cond_hier
+    return model_cond_hier_linear_d # Return the new model structure
 
 def sample_posterior(model, draws, tune, chains, target_accept):
     """Sample from the posterior distribution
@@ -213,11 +220,11 @@ def run_analysis():
     
     # This model is computationally expensive, so we use a smaller version for demonstration
     # This would typically be commented out in real analysis
-    data['P'] = min(data['P'], 10)  # Use fewer participants
-    data['hits_pk'] = data['hits_pk'][:data['P'], :]
-    data['fas_pk'] = data['fas_pk'][:data['P'], :]
-    data['participants'] = data['participants'][:data['P']]
-    print(f"Using reduced dataset with {data['P']} participants for demonstration")
+    # data['P'] = min(data['P'], 10)  # Use fewer participants
+    # data['hits_pk'] = data['hits_pk'][:data['P'], :]
+    # data['fas_pk'] = data['fas_pk'][:data['P'], :]
+    # data['participants'] = data['participants'][:data['P']]
+    # print(f"Using reduced dataset with {data['P']} participants for demonstration")
     
     model = build_model(data)
     

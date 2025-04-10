@@ -314,14 +314,58 @@
 
     We can now write a hierarchical model for any cognitive model.\pause
 
-    Say $y_{ip}$ is person $p$'s data from condition $i$: \pause$$y_{ip} = \left(\text{hit rate}_{ip}, \text{false alarm rate}_{ip}\right)$$\pause
+    Say $y_{ip}$ is person $p$'s data from condition $i$: \pause \emph{$y_{ip} = \left(\text{hit rate}_{ip}, \text{false alarm rate}_{ip}\right)$}\pause
     \begin{eqnarray*}
         y_{ip} &\sim& \text{SDT}(d'_{ip}, c'_{ip}) \\
         d'_{ip} &=& \alpha_{p} + \gamma_{i} \\
         \gamma_{i} &=& \zeta_{0} + \zeta_{1} \text{brightness}_{i} \\
         \alpha_{p} &\sim& \text{N}(\mu_{\alpha}, \sigma^2_{\alpha}) \\
-    \end{eqnarray*}\pause
-    Bayesian modeling software mostly takes care of the rest.
+    \end{eqnarray*}
+    ... where $\text{SDT}\left(\right)$ is shorthand for the signal detection theory functions covered earlier.
+    \pause
+
+    The rest is just a lot of typing.
+\end{frame}
+
+\begin{frame}[fragile]{Assignment: Constrain a hierarchical SDT model}
+    Change how group-level sensitivity ($d'$) is modeled across conditions ($k$) in \texttt{full.py}.
+
+    \begin{columns}[T] % Align tops
+        \begin{column}{0.45\textwidth}
+            \textbf{Full hierarchical model} \\
+            (Independent $d'$ per condition) \\
+            \textit{Group level (per condition $k$):}
+            \begin{itemize}
+                \item $\mu_{d',k} \sim \mathcal{N}(0, 2^2)$
+                \item $\sigma_{d',k} \sim \text{HalfNormal}(1)$
+            \end{itemize}
+            \textit{Individual level ($p, k$):}
+            \begin{itemize}
+                \item $d'_{pk} \sim \mathcal{N}(\mu_{d',k}, \sigma_{d',k}^2)$
+            \end{itemize}
+            Estimates a separate mean $\mu_{d',k}$ for each condition.
+        \end{column}
+
+        \begin{column}{0.6\textwidth}
+            \textbf{Condition explanatory hierarchical model} \\
+            (Linear effect of condition on $d'$) \\
+            \textit{Group level (overall):}
+            \begin{itemize}
+                \item $\mu_{d',\text{intercept}} \sim \mathcal{N}(0, 2^2)$
+                \item $\delta_{d'} \sim \mathcal{N}(0, 1^2)$ (Slope)
+                \item $\sigma_{d',k} \sim \text{HalfNormal}(1)$ (Variance per condition)
+            \end{itemize}
+            \textit{Deterministic group mean:}
+            \begin{itemize}
+                \item $\mu_{d',k} = \mu_{d',\text{intercept}} + \delta_{d'} \times k$
+            \end{itemize}
+            \textit{Individual level ($p, k$):}
+            \begin{itemize}
+                \item $d'_{pk} \sim \mathcal{N}(\mu_{d',k}, \sigma_{d',k}^2)$
+            \end{itemize}
+            Estimates intercept and slope; $\mu_{d',k}$ is derived.
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \maketitle
