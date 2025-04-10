@@ -16,8 +16,6 @@
 
 \maketitle
 
-\section{Hierarchical Modeling}
-
 \begin{frame}{Hierarchical modeling}
     A statistical framework for data with \textbf{dependencies} from \textbf{group structure}.
     \pause
@@ -319,51 +317,82 @@
         y_{ip} &\sim& \text{SDT}(d'_{ip}, c'_{ip}) \\
         d'_{ip} &=& \alpha_{p} + \gamma_{i} \\
         \gamma_{i} &=& \zeta_{0} + \zeta_{1} \text{brightness}_{i} \\
-        \alpha_{p} &\sim& \text{N}(\mu_{\alpha}, \sigma^2_{\alpha}) \\
+        \alpha_{p} &\sim& \text{N}(\mu_{\alpha}, \sigma^2_{\alpha})
     \end{eqnarray*}
     ... where $\text{SDT}\left(\right)$ is shorthand for the signal detection theory functions covered earlier.
     \pause
 
-    The rest is just a lot of typing.
+    The rest is just a lot of typing.\pause
+
+    This is an unidentified model, can you see why?
 \end{frame}
 
-\begin{frame}[fragile]{Assignment: Constrain a hierarchical SDT model}
-    Change how group-level sensitivity ($d'$) is modeled across conditions ($k$) in \texttt{full.py}.
+\begin{frame}[fragile]{Assignment: Constrain an SDT model}
+    Change how sensitivity ($d'$) is modeled across conditions ($k$) in \texttt{conditional.py}.
 
     \begin{columns}[T] % Align tops
         \begin{column}{0.45\textwidth}
-            \textbf{Full hierarchical model} \\
-            (Independent $d'$ per condition) \\
-            \textit{Group level (per condition $k$):}
+            \textbf{Currently: conditional SDT model} \\
             \begin{itemize}
-                \item $\mu_{d',k} \sim \mathcal{N}(0, 2^2)$
-                \item $\sigma_{d',k} \sim \text{HalfNormal}(1)$
+                \item Independent $d'$ per condition
+                \item $d'_{k} \sim \mathcal{N}(0, 2^2)$
+                \item Estimates an independent $d'_k$ for each condition $k$
+                \item Uses three free parameters to model $d'_k$
             \end{itemize}
-            \textit{Individual level ($p, k$):}
-            \begin{itemize}
-                \item $d'_{pk} \sim \mathcal{N}(\mu_{d',k}, \sigma_{d',k}^2)$
-            \end{itemize}
-            Estimates a separate mean $\mu_{d',k}$ for each condition.
         \end{column}
 
         \begin{column}{0.6\textwidth}
+            \textbf{Desired: Condition \emph{explanatory} SDT model} \\
+            \begin{itemize}
+                \item Linear effect of difficulty $C_k$ on $d'_k$
+                \item $d'_k = \beta_0 + \beta_1 \times C_k$, with
+                \begin{itemize}
+                \item $C=-1$ for `Easy'
+                \item $C=0$ for `Medium'
+                \item $C=1$ for `Hard'
+                \end{itemize}
+                \item Uses only two free parameters to model $d'_k$:
+                \begin{itemize}
+                    \item $\beta_0 \sim \mathcal{N}(0, 2^2)$
+                    \item $\beta_1 \sim \mathcal{N}(0, 0.5^2)$
+                \end{itemize}
+                \item Estimates intercept and slope; $d'_k$ is derived.
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Advanced assignment: Constrain a hierarchical SDT model}
+    Change how group-level sensitivity ($d'$) is modeled across conditions ($k$) in \texttt{full.py}.
+    
+    In either case, at the individual level, parameters for person $p$ in condition $k$ come from a population distribution: $d'_{pk} \sim \mathcal{N}(\mu_{k}, \sigma_{k}^2)$, with $\sigma_{k} \sim \text{HalfNormal}(1)$.\\[3ex]
+
+    \begin{columns}[T] % Align tops
+        \begin{column}{0.5\textwidth}
+            \textbf{Current full hierarchical model} \\
+            \begin{itemize}
+            \item The parameters of the population distribution are independent per condition:
+            \begin{itemize}
+                \item $\mu_{k} \sim \mathcal{N}(0, 2^2)$
+            \end{itemize}
+            \item Estimates a separate mean $\mu_{k}$ for each condition.
+            \end{itemize}
+        \end{column}
+
+        \begin{column}{0.55\textwidth}
             \textbf{Condition explanatory hierarchical model} \\
-            (Linear effect of condition on $d'$) \\
-            \textit{Group level (overall):}
             \begin{itemize}
-                \item $\mu_{d',\text{intercept}} \sim \mathcal{N}(0, 2^2)$
-                \item $\delta_{d'} \sim \mathcal{N}(0, 1^2)$ (Slope)
-                \item $\sigma_{d',k} \sim \text{HalfNormal}(1)$ (Variance per condition)
-            \end{itemize}
-            \textit{Deterministic group mean:}
+            \item The mean of the $d'$ population distribution is linear over conditions:
             \begin{itemize}
-                \item $\mu_{d',k} = \mu_{d',\text{intercept}} + \delta_{d'} \times k$
+                \item $\mu_{k} = \beta_0 + \beta_1 \times C_k$
             \end{itemize}
-            \textit{Individual level ($p, k$):}
-            \begin{itemize}
-                \item $d'_{pk} \sim \mathcal{N}(\mu_{d',k}, \sigma_{d',k}^2)$
+            \item[] with
+                \begin{itemize}
+                    \item $\beta_0 \sim \mathcal{N}(0, 2^2)$
+                    \item $\beta_1 \sim \mathcal{N}(0, 0.5^2)$
+                \end{itemize}
             \end{itemize}
-            Estimates intercept and slope; $\mu_{d',k}$ is derived.
+            Estimates intercept and slope; $\mu_{k}$ is derived.
         \end{column}
     \end{columns}
 \end{frame}
