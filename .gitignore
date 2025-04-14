@@ -4,6 +4,7 @@ old/
 data/
 config.py
 *solution*.py
+*.hide.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

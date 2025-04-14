@@ -68,7 +68,7 @@ def build_model(data):
         # The priors are the same type as before, but now define K independent parameters.
         # Use the `dims` argument to link the parameters to the coordinate names.
         d_prime = pm.Normal('d_prime', mu=0.0, sigma=2.0, dims="condition")
-        criterion = pm.Normal('criterion', mu=0.0, sigma=2.0, dims="condition")
+        criterion = pm.Normal('criterion', mu=0.0, sigma=0.5, dims="condition")
 
         # --- Deterministic Transformations ---
         # These calculations are now vectorized over the conditions.

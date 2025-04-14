@@ -6,10 +6,13 @@ This module provides the common imports and helper functions needed by the SDT m
 import pymc as pm
 import arviz as az
 import numpy as np
+import scipy as scipy
 import scipy.stats as stats
 import pytensor.tensor as pt  # For wrapping scipy functions if needed, or use pm.math
+import sys
 
 # For plotting
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -35,5 +38,13 @@ def Phi(x):
 
 def print_version_info():
     """Print version information for PyMC and ArviZ"""
+    print(f"Running python {sys.version}")
     print(f"Running on PyMC v{pm.__version__}")
     print(f"Running on ArviZ v{az.__version__}")
+    print(f"Running on numpy v{np.__version__}")
+    print(f"Running on scipy v{scipy.__version__}")
+    print(f"Running on matplotlib v{mpl.__version__}")
+    print(f"Running on seaborn v{sns.__version__}")
+
+if __name__ == "__main__":
+    print_version_info()
