@@ -25,11 +25,15 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import sys
 
+###############################################################################
+### --- Model definitions ---
+###############################################################################
+
 # Stroop + Guessing Model
 #   Parameters:
 #     alpha: Probability of an automatic, stereotype-consistent response.
 #     beta: Probability of controlled, accurate response.
-#     gamma: Probability of guessing “tool” when guessing occurs.
+#     gamma: Probability of guessing "tool" when guessing occurs.
 #   Model Structure:
 #     Sequential processing: automatic → controlled → guessing.
 
@@ -61,7 +65,7 @@ def fit_stroop_model(data, n_trials):
 #   Parameters:
 #     A: Probability of automatic processing.
 #     C: Probability of controlled processing.
-#     B: Probability of guessing “tool” when guessing occurs.
+#     B: Probability of guessing "tool" when guessing occurs.
 #   Model Structure:
 #     Automatic and controlled processing are independent branches, 
 #     allowing for dual routes to correct/incorrect responses.
@@ -99,22 +103,30 @@ def fit_saturated_model(data, n_trials):
 
     return trace
 
-# Runner function
+###############################################################################
+### --- Runner function ---
+###############################################################################
+
 def run_all_models(conditions_data, num_trials):
     """Runs all model fits and returns a dictionary of traces."""
 
     model_traces = {}
 
     for deadline, data in conditions_data.items():
-        print(f"\n--- Fitting models for {deadline} ---")
-        print("Fitting Stroop model...")
+        print(f"\n> --- Fitting models for {deadline} ---")
+        print("> Fitting Stroop model...")
         model_traces[f"stroop_{deadline}"] = fit_stroop_model(data, num_trials)
-        print("Fitting PD model...")
+        print("> Fitting PD model...")
         model_traces[f"pd_{deadline}"] = fit_pd_model(data, num_trials)
-        print("Fitting Saturated model...")
+        print("> Fitting Saturated model...")
         model_traces[f"saturated_{deadline}"] = fit_saturated_model(data, num_trials)
 
     return model_traces 
+
+
+###############################################################################
+### --- Data loading ---
+###############################################################################
 
 def load_rivers_data():
     """
@@ -152,67 +164,118 @@ def load_rivers_data():
         }
     }
     return data
-    
 
-# --- Constants ---
-N_TRIALS = 1440
 
-FIG_DIR = Path("1-mpt/figures") # Directory to save output figures
+###############################################################################
+### --- Helper functions ---
+###############################################################################
 
-# --- Main execution block ---
-if __name__ == "__main__":
+def get_var_names_from_idata(idata):
+    """Helper function to get the variable names from an ArviZ IData object."""
+    return [v for v in idata.posterior.variables if v not in ['chain', 'draw']]
 
-    # --- Create Figure Directory ---
+def ensure_figure_directory_exists():
+    """Ensures that the figure directory exists."""
     try:
         FIG_DIR.mkdir(parents=True, exist_ok=True)
         print(f"Figures will be saved to: {FIG_DIR.resolve()}")
     except OSError as e:
         print(f"Error creating figure directory {FIG_DIR}: {e}", file=sys.stderr)
 
-    data = load_rivers_data()
 
-    all_results = run_all_models(data, N_TRIALS)
+###############################################################################
+### --- Postprocessing ---
+###############################################################################
 
-    # Visualization
-    idata_stroop_500ms = all_results["stroop_500ms"]
+def make_figures(all_results, model, condition):
+    """Makes all the figures for a model and condition."""
+    
+    if model not in ["stroop", "pd", "saturated"]:
+        raise ValueError("Model must be either 'stroop', 'pd', or 'saturated'")
+    
+    if condition not in ["500ms", "1000ms"]:
+        raise ValueError("Condition must be either '500ms' or '1000ms'")
+    
+    idata = all_results[f"{model}_{condition}"]
+    
+    if idata is None:
+        print(f"Skipping figures for {model} ({condition}): Not implemented yet")
+        return
+    
+    var_names = get_var_names_from_idata(idata)
+    
+    # Default colors that will cycle if there are more variables than colors
+    colors = ['#0000DD', '#DD0000', '#DD9500', '#00DD00']
 
     az.plot_pair(
-        idata_stroop_500ms,
-        var_names=["alpha", "beta", "gamma"],
+        idata,
+        var_names=var_names,
         kind="kde",
         figsize=(8, 8)
     )
-    plt.suptitle("Stroop Model (500ms) Posterior Pair Plot", fontsize=14, y=1.02)
+    plt.suptitle(f"{model} ({condition}) Posterior Pair Plot", fontsize=14, y=1.02)
     plt.tight_layout()
-    plt.savefig(FIG_DIR / 'stroop_500ms_pairplot.png')
-
-    # Print summary
-    print("\nStroop 500ms Model Summary:")
-    print(az.summary(idata_stroop_500ms, var_names=['alpha', 'beta', 'gamma']))
+    plt.savefig(FIG_DIR / f"{model}_{condition}_pairplot.png")
 
     # Create Matplotlib figure and axes
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    variables_to_plot = ['alpha', 'beta', 'gamma']
-    colors = ['#0000DD', '#DD0000', '#DD9500'] 
-
-    for var_name, color in zip(variables_to_plot, colors):
+    for var_name, color in zip(var_names, colors * ((len(var_names) // len(colors)) + 1)):
         az.plot_density(
-            idata_stroop_500ms,
+            idata,
             var_names=[var_name],
             hdi_prob=1.0,
             shade=0.2,
             point_estimate=None,
             ax=ax,
-            colors = color
+            colors=color
         )
 
-    ax.set_title("Stroop Model (500ms) Marginal Posteriors")
+    ax.set_title(f"{model} ({condition}) marginal posteriors")
     ax.set_xlabel("Parameter Value")
     ax.set_ylabel("Density")
     ax.set_xlim(0, 1)
 
     plt.tight_layout()
-    plt.savefig(FIG_DIR / 'stroop_500ms_marginal_posteriors.png')
+    plt.savefig(FIG_DIR / f"{model}_{condition}_marginal_posteriors.png")
 
+def print_summary(all_results, model, condition):
+    """Prints the summary of a model for a given condition."""
+    # Print summary
+    idata = all_results[f"{model}_{condition}"]
+    if idata is None:
+        print(f"\n{model} ({condition}) model summary: Not implemented yet")
+        return
+        
+    var_names = get_var_names_from_idata(idata)
+    print(f"\n{model} ({condition}) model summary:")
+    print(az.summary(idata, var_names=var_names))
+
+
+###############################################################################
+### --- Constants ---
+###############################################################################
+
+N_TRIALS = 1440
+
+ROOT_DIR = Path(__file__).parent.parent
+FIG_DIR = ROOT_DIR / "figures"
+
+
+###############################################################################
+### --- Main execution block ---
+###############################################################################
+
+if __name__ == "__main__":
     
+    ensure_figure_directory_exists()
+
+    data = load_rivers_data()
+
+    all_results = run_all_models(data, N_TRIALS)
+    
+    # --- Loop over all cases ---
+    for model in ["stroop", "pd", "saturated"]:
+        for condition in ["500ms", "1000ms"]:
+            print_summary(all_results, model, condition)
+            make_figures(all_results, model, condition)
