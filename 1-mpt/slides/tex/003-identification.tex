@@ -1,0 +1,345 @@
+\documentclass[aspectratio=169]{beamer}
+
+% Custom theme and packages
+\usepackage{beamertheme-custom}
+% Custom symbols and commands
+\usepackage{symbols-custom}
+\usepackage{ 
+    enumitem,
+    booktabs}
+
+
+\usepackage{ 
+    tikz,
+    tikz-qtree,
+    xcolor}
+    
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usetikzlibrary{trees}
+\usetikzlibrary{tikzmark}
+
+\tikzset{% set up for transitions using tikz with beamer overlays
+  invisible/.style={color=black!75!white},
+  color on/.style={alt=#1{}{invisible}},
+  alt/.code args={<#1>#2#3}{%
+    \alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}} % \pgfkeysalso doesn't change the path
+  },
+}
+
+
+\setlist[enumerate]{label=\bf\alph*)}
+
+
+% Font
+\usefonttheme[onlymath]{serif}
+
+
+\usepackage{listings} % For code snippets
+
+% Define graphicspath relative to the TeX file location
+\graphicspath{{figures/}} % Match python FIG_DIR
+
+% Code listing style (similar to previous, adjust colors/style as desired)
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.98,0.98,0.98} % Light background for code
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\itshape\color{codegreen}, % Italic comments
+    keywordstyle=\bfseries\color{blue}, % Bold keywords
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=Python
+}
+\lstset{style=mystyle}
+
+% Custom symbols (replace if symbols-custom was available)
+% Define any needed math operators or symbols here
+\DeclareMathOperator{\Normal}{Normal}
+\DeclareMathOperator{\HalfNormal}{HalfNormal}
+\DeclareMathOperator{\Binomial}{Binomial}
+\newcommand{\Phicdf}{\Phi} % Use \Phi for Normal CDF
+
+% Title page info
+\title{Identifiability}
+\author{Joachim Vandekerckhove}
+\date{Spring 2025}
+
+\begin{document}
+
+% --- Title Slide ---
+\maketitle
+
+% --- Recap Non-Identifiability (Style similar to priming.tex) ---
+\begin{frame}{Recap: What is Non-Identifiability?}
+  \begin{itemize}
+    \item A model is \emph{non-identifiable} if different parameter combinations yield the exact same predictions (likelihood).
+    \pause
+    \item The data cannot distinguish between these combinations. \pause
+    \item \textbf{Structural Non-Identifiability}: Inherent in model equations. \pause
+    \item \textbf{Consequences}:
+          \begin{itemize}[label=--, itemsep=0.5ex] % Nested itemize like example
+              \item Poor MCMC convergence ($\hat{R} \gg 1$, low ESS).
+              \item Unreliable posterior distributions (drifting, odd shapes).
+              \item Strong correlations between confounded parameters.
+              \item Misleading inferences.
+          \end{itemize}
+  \end{itemize}
+\end{frame}
+
+% --- The SDT Example Model ---
+\begin{frame}[fragile]{Example: Hierarchical SDT Model}
+  Predicting Hits ($H_{ip}$) and False Alarms ($F_{ip}$) for person $p$ under condition $i$. \pause
+  \textbf{Likelihood}: Binomial counts based on SDT probabilities.
+  \begin{align*}
+    \left(H_{ip}, F_{ip}\right) &\sim SDT\left(d'_{ip}, c_p, n_s, n_n\right)
+  \end{align*} \pause
+  \textbf{Hierarchical Parameter Models} (Non-Identified Version):
+  \begin{align*}
+    d'_{ip} &= \alpha_p + \gamma_i \\
+    \gamma_i &= \zeta_0 + \zeta_1 \cdot \text{predictor}_i \quad &\text{(Condition effect on } d')\\
+    \alpha_p &\sim \Normal(\mu_\alpha, \sigma^2_\alpha) \quad &\text{(Person sensitivity intercept)}\\
+    c_p &\sim \Normal(\mu_c, \sigma^2_c) \quad &\text{(Person criterion)}
+  \end{align*}
+\end{frame}
+
+% --- Spotting the Issue ---
+\begin{frame}{Spotting the Non-Identifiability}
+  The core issue lies in the definition of sensitivity $d'_{ip}$:
+  \begin{align*}
+    d'_{ip} &= \alpha_p + \gamma_i \\
+           &= \alpha_p + (\zeta_0 + \zeta_1 \cdot \text{predictor}_i) \\
+           &= (\alpha_p + \zeta_0) + \zeta_1 \cdot \text{predictor}_i \label{eq:nonid}
+  \end{align*} \pause
+  The likelihood only depends on the sum $(\alpha_p + \zeta_0)$. \pause
+  \begin{itemize}
+      \item Let $\tilde{\alpha}_p = \alpha_p - C$ and $\tilde{\zeta}_0 = \zeta_0 + C$.
+      \item Then $\tilde{\alpha}_p + \tilde{\zeta}_0 = \alpha_p + \zeta_0$. The predicted $d'_{ip}$ is unchanged. \pause
+      \item As a result, there cannot exist a unique set of optimal parameters. \pause
+      \item Nothing can distinguish trade-offs between $\mu_\alpha$ and $\zeta_0$. \pause
+      \item This is \emph{structural non-identifiability}.
+  \end{itemize}
+\end{frame}
+
+% --- Symptoms ---
+\begin{frame}{Common MCMC Symptoms}
+  Fitting the non-identified model is expected to show: \pause
+    \begin{itemize}[label=--, itemsep=1ex]
+        \item \textbf{Poor Convergence} for confounded parameters ($\mu_\alpha$, $\zeta_0$): High $\hat{R}$, Low ESS. \pause
+        \item \textbf{Wandering Trace Plots}: Chains for $\mu_\alpha$, $\zeta_0$ may not mix or stabilize. \pause
+        \item \textbf{Strong Posterior Correlation}: A clear negative correlation between $\mu_\alpha$ and $\zeta_0$ samples. \pause
+        \item \textbf{Sampling Difficulties}: Potential warnings (divergences, etc.).
+    \end{itemize}
+    Any or all of these can occur.
+\end{frame}
+
+% --- PyMC Code Non-ID SDT ---
+\begin{frame}[fragile]{PyMC Code (Non-Identified SDT)}
+  Key parameter definitions causing the issue:
+  \begin{lstlisting}[label=lst:nonid_sdt_code]
+# Uninformative priors for Sensitivity (d') parameters
+mu_alpha = pm.Normal("mu_alpha", mu=0.0, sigma=1.0e9) # << Part 1
+sigma_alpha = pm.HalfNormal("sigma_alpha", sigma=1.0e9)
+zeta0 = pm.Normal("zeta0", mu=0.0, sigma=1.0e9)       # << Part 2
+zeta1 = pm.Normal("zeta1", mu=0.0, sigma=1.0e9)
+
+# Person sensitivity intercepts (drawn from mu_alpha)
+alpha_p = pm.Normal("alpha_p", ...)
+
+# Calculate d' using alpha_p and gamma_i
+d_ip = pm.Deterministic("d_ip", alpha_p[...] + gamma_i) # << Part 3
+
+# ... SDT calculations ...\end{lstlisting}
+\end{frame}
+
+% --- Diagnosis Trace Plots SDT ---
+\begin{frame}{Possible Diagnosis 1: Trace Plots}
+  Use `arviz.plot\_trace()` focusing on `mu\_alpha` and `zeta0`. \pause
+
+  \textbf{Look For:}
+        \begin{itemize}[label=--, itemsep=1ex]
+            \item Poor mixing for `mu\_alpha`, `zeta0`.
+            \item Chains exploring different levels.
+            \item Compare to well-behaved traces (e.g., `mu\_c`).
+            \item Corroborate with high $\hat{R}$ in summary.
+        \end{itemize}
+\end{frame}
+
+% --- Diagnosis Trace Plots SDT ---
+\begin{frame}{Possible Diagnosis 1: Trace Plots}
+  \begin{columns}[T]
+    \begin{column}{0.45\textwidth}
+        \begin{figure}
+            \includegraphics<1->[width=\linewidth]{nonid_sdt_trace.png}
+        \end{figure}
+     \end{column}\pause
+     \begin{column}{0.45\textwidth}
+        For comparison, here are trace plots of the fixed (identified) model:
+        \begin{figure}
+            \includegraphics<1->[width=\linewidth]{id_sdt_trace.png}
+        \end{figure}
+
+     \end{column}
+  \end{columns}
+\end{frame}
+
+
+\begin{frame}[fragile]{MCMC Output Table}
+\tiny
+\begin{verbatim}
+    --- Non-Identified SDT Model Summary ---
+                     mean       sd   hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+mu_alpha           40.779  268.443 -304.985  570.827    128.271   70.199       5.0      17.0   2.70
+zeta0             -38.809  268.503 -569.032  307.068    128.298   70.209       5.0      17.0   2.70
+zeta1              -0.397    0.028   -0.446   -0.350      0.008    0.001      15.0     180.0   1.22
+mu_c                0.048    0.058   -0.020    0.173      0.027    0.014       5.0      26.0   2.35
+Sampling 4 chains for 1_500 tune and 1_000 draw iterations (6_000 + 4_000 draws total) took 379 seconds.
+There were 1000 divergences after tuning. Increase `target_accept` or reparameterize.
+\end{verbatim}
+
+\begin{verbatim}
+--- Identified SDT Model Summary ---
+                     mean       sd   hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+mu_alpha_intercept  1.936    0.149    1.659    2.221      0.008    0.004     380.0     598.0   1.01
+zeta1              -0.398    0.033   -0.463   -0.341      0.001    0.000    3558.0    3080.0   1.00
+mu_c                0.072    0.062   -0.046    0.186      0.003    0.002     426.0     735.0   1.01
+Sampling 4 chains for 1_500 tune and 1_000 draw iterations (6_000 + 4_000 draws total) took 12 seconds.
+\end{verbatim}
+\end{frame}
+
+% --- Diagnosis Pair Plots SDT ---
+\begin{frame}{Possible Diagnosis 2: Pair Plots}
+  Use `arviz.plot\_pair()` for sensitivity parameters `mu\_alpha`, `zeta0`. \pause
+  \begin{columns}[T]
+     \begin{column}{0.5\textwidth}
+        \textbf{Look For:}
+        \begin{itemize}[label=--, itemsep=1ex]
+            \item Strong linear correlation ``ridge.''
+            \item Specifically, a \emph{negative} correlation between `mu\_alpha` and `zeta0`.
+            \item Poorly conditioned marginal densities.
+        \end{itemize}
+     \end{column}%
+     \begin{column}{0.5\textwidth}
+        \begin{figure}
+            \includegraphics<1->[width=\linewidth]{nonid_sdt_pair.png}
+        \end{figure}
+     \end{column}
+  \end{columns}
+\end{frame}
+
+% --- Fixing Strategies ---
+\begin{frame}{Fixing the Non-Identifiability}
+  Common strategies: \pause
+  \begin{enumerate}[label=\bf\alph*)] % Use bold alpha like example
+    \item \textbf{Reparameterization (Preferred):}
+        \begin{itemize}[label=--, itemsep=0.5ex]
+            \item Remove redundant parameters (e.g., remove $\zeta_0$).
+            \item Use sum-to-zero constraints (more complex).
+            \item Use contrasts relative to a baseline condition.
+        \end{itemize} \pause
+    \item \textbf{Informative Priors:} Can sometimes help practically, but remember that your conclusions will then strongly depend on your assumptions.
+  \end{enumerate} \pause
+  Let's see what informative priors can do...
+\end{frame}
+
+\begin{frame}[fragile]{Using Informative Priors}
+    Setting $\mu_\alpha \sim N(0, 1.5)$ gives converging chains:
+    \tiny
+\begin{verbatim}
+    --- Semi-Identified SDT Model Summary ---
+    mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+mu_alpha     1.301  0.827  -0.310    2.807      0.018    0.013    2023.0    2365.0   1.00
+zeta0        0.629  0.825  -0.924    2.183      0.018    0.013    2002.0    2339.0   1.00
+zeta1       -0.398  0.033  -0.459   -0.338      0.001    0.001    3915.0    2744.0   1.00
+mu_c         0.067  0.064  -0.051    0.190      0.003    0.002     480.0     720.0   1.01
+\end{verbatim}
+\end{frame}
+
+\begin{frame}{Using Informative Priors}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            Even reasonable trace plots:
+            \begin{figure}
+                \includegraphics<1->[width=\linewidth]{semiid_sdt_trace.png}
+            \end{figure}
+        \end{column}\pause
+        \begin{column}{0.5\textwidth}
+            But the trade-off pops out of the pair plot:
+            \begin{figure}
+                \includegraphics<1->[width=\linewidth]{semiid_sdt_pair.png}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% --- Applying the Real Fix: Remove $\zeta_0$}
+\begin{frame}[fragile]{Applying the Real Fix: Remove $\zeta_0$}
+  Interpretation changes: $\mu_\alpha$ becomes `mu\_alpha\_int`, average d' when predictor=0. \pause
+  \begin{lstlisting}[label=lst:id_sdt_code]
+# Priors for Sensitivity (d') parameters
+mu_alpha_int = pm.Normal("mu_alpha_int", ...) # Was mu_alpha
+sigma_alpha = pm.HalfNormal("sigma_alpha", ...)
+# zeta0 = pm.Normal("zeta0", ...) # <<< REMOVED
+zeta1 = pm.Normal("zeta1", ...)
+
+# Person sensitivity intercepts (drawn from mu_alpha_intercept)
+alpha_p = pm.Normal("alpha_p", ...)
+
+# Condition Effects on Sensitivity (NO intercept)
+gamma_i = pm.Deterministic("gamma_i", zeta1 * cond_pred_data)
+
+# SDT likelihood calculations are structurally identical
+# ...\end{lstlisting}
+\end{frame}
+
+% --- Results After Fix SDT ---
+\begin{frame}{Results After Fixing}
+  The identified model should exhibit good MCMC behavior. \pause
+   \begin{columns}[T]
+     \begin{column}{0.5\textwidth}
+        \vspace{1em}
+        \textbf{Expected Results:}
+        \begin{itemize}[label=--, itemsep=1ex]
+            \item Good convergence ($\hat{R} \approx 1$).
+            \item High Effective Sample Sizes (ESS).
+            \item Well-mixed, stable trace plots.
+        \end{itemize}
+        Now there should also be no problematic correlations involving `mu\_alpha\_int`.
+     \end{column}%
+     \begin{column}{0.5\textwidth}
+        \begin{figure}
+            \includegraphics<1->[width=\linewidth]{id_sdt_pair.png}
+        \end{figure}
+     \end{column}
+  \end{columns}
+\end{frame}
+
+% --- Key Points / Summary (Style similar to priming.tex) ---
+\begin{frame}{Key Points}
+\begin{itemize}%[label=--, itemsep=1ex] % Use standard itemize or customize label
+    \item Non-identifiability can arise in hierarchical models from redundant parameters (e.g., multiple intercepts). \pause
+    \item Additive structures like $d' = \text{person\_effect} + \text{condition\_effect}$ are common sources if both components have intercepts. \pause
+    \item Diagnose using MCMC convergence stats ($\hat{R}$, ESS) and visual checks (trace plots, pair plots). \pause
+    \item Fix primarily via reparameterization (removing redundancy, using constraints). \pause
+    \item Always check for potential identifiability issues before interpreting model parameters. A model with convergence issues will generally not yield reliable inferences!
+\end{itemize}
+%\vspace{8em} % Add vertical space if needed like example
+\end{frame}
+
+\maketitle
+
+\end{document}
