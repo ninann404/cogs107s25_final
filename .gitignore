@@ -1,7 +1,6 @@
 *.swp
 .build/
 old/
-data/
 config.py
 *solution*.py
 *.hide.*
