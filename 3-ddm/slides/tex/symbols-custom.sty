@@ -1,0 +1,111 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{symbols-custom}[2024/07/17 Custom Symbols and Commands]
+
+\RequirePackage{amsmath, amssymb, bm}
+
+
+% Super lazy shorthands
+\newcommand{\e}[1]{\emph{#1}}
+\newcommand{\strng}[1]{{{\color{jade}#1}}}
+
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\renewcommand{\i}{\item[$\bullet$]<+->}
+
+\newcommand{\ex}[1]{\begin{block}{#1}\vspace{0pt}}
+\newcommand{\xe}{\end{block}\vspace{3ex}}
+
+\newcommand{\beq}{\begin{eqnarray*}}
+\newcommand{\eeq}{\end{eqnarray*}}
+
+\renewcommand{\c}[2]{{\color{#1}\texttt{#2}}}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+
+
+% \% Nomenclature
+\newcommand\ezdiff{EZ-diff}
+
+% \% Functions
+\newcommand\logit[1]{\text{logit}\left(#1\right)}
+\newcommand\inv[1]{{#1}^{-1}}
+\newcommand\xp[1]{\text{exp}\left(#1\right)}
+\newcommand\sign[1]{\text{sgn}\left(#1\right)}
+
+\newcommand{\iv}[2]{I_{#1}\left(#2\right)}
+\newcommand{\ivp}[3]{I_{#1}^{#3}\left(#2\right)}
+
+% \% Statistical conventions
+\newcommand{\predicted}[1]{{{#1}^{\text{pred}}}}
+\newcommand{\observed}[1]{{#1}^{\text{obs}}}
+\newcommand{\estimated}[1]{{{#1}^{\text{est}}}}
+
+% \% Wiener diffusion model parameters (DDM)
+\let\nondt\tau
+\let\drift\nu
+\let\bound\alpha
+
+\def\LogitAccuracy{L}
+
+\def\AccuracyRate{R}
+\def\AccuracyTotal{T}
+\def\TrialsTotal{N}
+\def\Variance{V}
+\def\Mean{M}
+
+\def\ObservedAccuracyRate{{\observed{\AccuracyRate}}}
+\def\ObservedAccuracyTotal{{\observed{\AccuracyTotal}}}
+\def\ObservedVariance{{\observed{\Variance}}}
+\def\ObservedMean{{\observed{\Mean}}}
+
+\def\PredAccuracyRate{{\predicted{\AccuracyRate}}}
+\def\PredVariance{{\predicted{\Variance}}}
+\def\PredMean{{\predicted{\Mean}}}
+
+\def\PredVarAccuracy{{\predicted{\Accuracy}}}
+\def\PredVarVariance{{\predicted{\Variance}}}
+\def\PredVarMean{{\predicted{\Mean}}}
+
+\def\EstNondecision{{\estimated{\tau}}}
+\def\EstDrift{{\estimated{\nu}}}
+\def\EstBound{{\estimated{\alpha}}}
+
+% \% SDT parameters (Add new symbols for SDT here)
+\newcommand{\sdtMuN}{\mu_N}                % Mean of Noise distribution
+\newcommand{\sdtSigmaN}{\sigma_N}            % SD of Noise distribution
+\newcommand{\sdtMuSN}{\mu_{S+N}}           % Mean of Signal+Noise distribution
+\newcommand{\sdtSigmaSN}{\sigma_{S+N}}         % SD of Signal+Noise distribution
+\newcommand{\sdtSigma}{\sigma}              % Common SD
+\newcommand{\sdtLambda}{k}            % Criterion (absolute location)
+\newcommand{\sdtCrit}{c}                   % Criterion (relative location)
+\newcommand{\sdtDprime}{d'}                % Sensitivity
+\newcommand{\normalCDF}[1]{\Phi\left(#1\right)}              % Standard Normal CDF
+\newcommand{\invNormalCDF}[1]{\Phi^{-1}\left(#1\right)}      % Inverse Standard Normal CDF
+\newcommand{\normalPDF}{\phi}              % Standard Normal PDF
+\newcommand{\sdtBeta}{\beta}               % Likelihood ratio criterion
+
+
+% Circular diffusion model parameters (commented out)
+% \def\cdmMeanChoice{M_a}
+% \def\cdmVarChoice{V_a}
+% \def\cdmMeanRT{M_t}
+% \def\cdmVarRT{V_t}
+% 
+% \def\cdmPredMeanChoice{\tilde\cdmMeanChoice}
+% \def\cdmPredVarChoice{\tilde\cdmVarChoice}
+% \def\cdmPredMeanRT{\tilde\cdmMeanRT}
+% \def\cdmPredVarRT{\tilde\cdmVarRT}
+% 
+% \def\cdmNondecision{\tau}
+% \def\cdmDriftAngle{\theta}
+% \def\cdmDriftLength{\nu}
+% \def\cdmBound{\alpha}
+% 
+% \def\cdmR{R}
+% \def\cdmTa{k_0}
+% \def\cdmTb{k_1}
+
+\endinput
+%%
+%% End of file `symbols-custom.sty`. 

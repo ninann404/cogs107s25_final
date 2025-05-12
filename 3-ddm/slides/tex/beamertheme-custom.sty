@@ -1,0 +1,158 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamertheme-custom}[2024/07/17 Custom Beamer Style]
+
+% Packages
+\RequirePackage{pgf}
+\RequirePackage{tikz}
+\usetheme[progressbar=foot]{metropolis} % Base theme
+
+% Load necessary libraries for figures/code etc.
+\RequirePackage{hyperref}
+\hypersetup{hidelinks} % Hide ugly boxes around links
+\RequirePackage{amsmath, amssymb, bm, graphicx}
+\RequirePackage{xcolor,transparent}
+\RequirePackage{listings}
+\RequirePackage{pgfplots} % For plots like ROC curves
+\pgfplotsset{compat=1.18} % Use a recent compatibility mode
+\usetikzlibrary{decorations.pathmorphing} % For wiggly line
+\usetikzlibrary{arrows.meta} % For better arrow tips
+\usetikzlibrary{calc} % For coordinate calculations
+\usetikzlibrary{patterns} % For filling areas
+\usetikzlibrary{datavisualization} % For data plots
+\usetikzlibrary{datavisualization.formats.functions} % For function plots
+\usetikzlibrary{positioning} % For node positioning
+\usetikzlibrary{fit} % To fit nodes
+\usetikzlibrary{shapes.misc} % For shapes like pins
+
+\RequirePackage{apacite}
+\RequirePackage{enumitem}
+\RequirePackage{booktabs}
+\RequirePackage{colortbl}
+
+\setbeamertemplate{itemize item}{\textbullet} % or \ding{43}, etc.
+\setbeamertemplate{itemize subitem}{--}
+\setbeamertemplate{itemize subsubitem}{$\ast$}
+
+\setlist[itemize]{label={\textbullet}}
+\setlist[itemize,2]{label={--}}
+\setlist[itemize,3]{label={$\ast$}}
+
+
+% Extend cite for color
+\let\plainCiteA\citeA
+\renewcommand{\citeA}[2][gray]{{\color{#1}\plainCiteA{#2}}}
+\let\plainCite\cite
+\renewcommand{\cite}[2][gray]{{\color{#1}\plainCite{#2}}}
+
+\newcommand{\titleCiteA}[1]{\citeA[titleCiteAColor]{#1}}
+\newcommand{\titleCite}[1]{\cite[titleCiteColor]{#1}}
+
+
+
+% Theme modifications
+\addtobeamertemplate{frametitle}{}{\vspace{1em}}
+\renewcommand{\emph}[1]{{{\color{red}#1}}}
+\renewcommand\bibliographytypesize{\footnotesize}
+
+\setbeamercolor{block title}{use=structure,fg=black,bg=black!15!white}
+\setbeamercolor{block body}{use=structure,fg=black,bg=black!10!white}
+
+\setbeamercolor{background canvas}{bg=white}
+%\setbeamercolor{normal text}{fg=black}
+
+\renewcommand\bibliographytypesize{\footnotesize}
+
+\setlist[enumerate]{label=\bf\alph*)}
+
+\addtobeamertemplate{block begin}{\vskip +1.5\bigskipamount}{}
+\addtobeamertemplate{block end}{}{\vskip -1.5\bigskipamount}
+
+
+
+
+% Font
+\usefonttheme[onlymath]{serif}
+
+
+
+
+
+
+
+% Define colors
+\definecolor{paleyellow}{rgb}{0.98,0.98,0.9}
+\definecolor{brickred}{rgb}{0.8,0.2,0.2}
+\definecolor{palegreen}{rgb}{0.9,0.98,0.9}
+
+% Configure listings for Python code
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\scriptsize, % Smaller font
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{green!50!black},
+    showstringspaces=false,
+    frame=tb,
+    rulecolor=\color{palegreen},
+    backgroundcolor=\color{paleyellow},
+    xleftmargin=2.5mm,
+    xrightmargin=2.5mm,
+    framexleftmargin=2.5mm,    % internal left padding
+    framexrightmargin=2.5mm,   % internal right padding
+    framesep=2.5mm,            % vertical padding (top and bottom)
+    numbers=none,
+    breaklines=true,
+    breakatwhitespace=true,
+    escapeinside={(*@}{@*)}, % Allow LaTeX commands inside code
+    upquote=true % Correct handling of single quotes
+}
+
+% Custom Emphasis Color
+\renewcommand{\emph}[1]{\textcolor{brickred}{#1}}
+
+% Wiggly Box Environment (from original syllabus)
+\newsavebox{\WigglyBox}
+\newenvironment{revquote}
+  {\begin{lrbox}{\WigglyBox}\begin{minipage}{\dimexpr\textwidth-280pt\relax}} % Adjust minipage width if needed
+  {\end{minipage}\end{lrbox}%%
+   \begin{tikzpicture}
+     \node[inner sep=10pt, outer sep=0pt] (Wiggly) {\usebox\WigglyBox};
+     \draw[decorate, decoration={snake, segment length=4pt, amplitude=0pt}, line width=1pt]
+       (Wiggly.north west) -- (Wiggly.south west);
+   \end{tikzpicture}%%
+   \vspace{2pt}}
+
+% Helper function for normal PDF (requires pgfplots)
+\pgfmathdeclarefunction{normalpdf}{2}{%
+  \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+
+% Helper function for normal CDF (requires pgfplots)
+\pgfmathdeclarefunction{normalcdf}{1}{%
+  \pgfmathparse{0.5*(1+erf(#1/(sqrt(2))))}%
+}
+
+% Helper function for inverse normal CDF (requires pgfplots)
+% Approximation using Wichura's algorithm AS 241 - good enough for plotting
+\pgfmathdeclarefunction{normalcdfinv}{1}{%
+  \pgfmathparse{x}\pgfmathifgt{\pgfmathresult}{0.5}{\pgfmathparse{1-x}}{}\pgfmathiflt{\pgfmathresult}{0.0}{\pgfmathparse{0.0000000001}}{}\pgfmathifgt{\pgfmathresult}{1.0}{\pgfmathparse{0.9999999999}}{}%
+  \pgfmathsetmacro\pp{\pgfmathresult}%
+  \pgfmathsetmacro\lnpp{ln(\pp)}%
+  \pgfmathsetmacro\t{sqrt(-2*\lnpp)}%
+  \pgfmathsetmacro\c0{2.515517}%
+  \pgfmathsetmacro\c1{0.802853}%
+  \pgfmathsetmacro\c2{0.010328}%
+  \pgfmathsetmacro\d1{1.432788}%
+  \pgfmathsetmacro\d2{0.189269}%
+  \pgfmathsetmacro\d3{0.001308}%
+  \pgfmathsetmacro\num{\c0+\c1*\t+\c2*\t^2}%
+  \pgfmathsetmacro\den{1+\d1*\t+\d2*\t^2+\d3*\t^3}%
+  \pgfmathsetmacro\z{\t - \num / \den}%
+  \pgfmathifgt{x}{0.5}{\pgfmathparse{\z}}{}%
+  \pgfmathifleq{x}{0.5}{\pgfmathparse{-\z}}{}%
+}
+
+
+\endinput
+%%
+%% End of file `beamertheme-custom.sty`. 
