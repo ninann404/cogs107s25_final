@@ -1,0 +1,222 @@
+\documentclass[aspectratio=169]{beamer}
+
+% Custom theme and packages
+\usepackage{beamertheme-custom}
+% Custom symbols and commands
+\usepackage{symbols-custom}
+
+\graphicspath{{figures/}}
+
+\title{Item response theory}
+\author{Joachim Vandekerckhove}
+\date{Spring 2025}
+
+% Font
+\usefonttheme[onlymath]{serif}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}[fragile]{Item response theory}
+
+A set of methods and models to think about \emph{testing} and to develop exams and questionnaires.
+\pause
+
+Particularly useful when 
+\bi
+\i multiple respondents are presented with multiple items
+\i respondents may differ in their ability (or some other underlying construct)
+\i items may differ in their difficulty (or their correspondence to the construct)
+\ei
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Representations in IRT}
+
+Most commonly, the data are \textit{dichotomous}: $X_{ip} \in \{0, 1\}$\pause
+
+A respondent $p$ has an \emph{ability}, $\theta_p \in \mathbb{R}$\pause
+
+An item $i$ has a \emph{difficulty}, $\beta_i \in \mathbb{R}$\pause
+
+Ability is not directly observable -- we call it a \textit{latent trait} \cite{birnbaum1968some}\pause
+
+Critically, in IRT we assume that the ability $\theta$ and the difficulty $\beta$ are directly comparable\pause
+
+We can quantify the \emph{dominance}, $\eta_{ip} \in \mathbb{R}$, a respondent has over an item
+$$\eta_{ip} = \theta_p - \beta_i$$
+
+
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Linking functions}
+We're now interested in using that dominance to express the probability that the respondent will answer an item `correctly'\pause
+
+Note that $\eta_{ip} \in \mathbb{R}$: the dominance parameter lives in the domain of the real numbers -- it is not a probability\pause
+
+In order to express the dominance as a probability, we need to \textit{map} the parameter to the   $(0,1)$ domain, where probabilities live\pause
+
+For this, we will use a \textit{linking} function -- a function that takes as input $\eta_{ip} \in \mathbb{R}$ and gives as output a value $(0,1)$
+
+$$\mathbb{R} \overset{\text{link}}{\longrightarrow} (0,1) $$
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Linking functions}
+
+In IRT, we use the \textit{logistic function} (also known as the \textit{inverse logit}):\\[1ex]
+
+$$P\left(X_{ip} = 1\right) = \pi_{ip} = \frac{1}{1 + \exp(-\eta_{ip})}$$\\[3ex]
+
+\begin{figure}[htp]
+  \centering
+  \includegraphics<1>[scale=0.75]{ogive_1.eps}%
+  \includegraphics<2>[scale=0.75]{ogive_2.eps}%
+\end{figure}
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]{The Rasch model}
+
+A much more convenient way of writing that is:
+\beq
+P\left(X_{ip}=1\right) &=& \text{ilogit}\left(\eta_{ip}\right)\\
+                       &=& \text{ilogit}\left(\theta_p - \beta_i\right)\\
+\Leftrightarrow\quad \text{logit}\left(P\left(X_{ip}=1\right)\right)  &=& \theta_p - \beta_i
+\eeq\pause
+
+This exact formulation is one of the most common IRT models (there are a few).  This is called the \textit{Rasch} model, after Danish psychometrician Georg Rasch \cite{rasch1961general}\\[2ex]\pause
+
+The attraction of this model is that it lets us take the data matrix $\mathbf{X}$ and infer person-specific abilities and item-specific difficulties
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Item response data}
+The data matrix $\mathbf{X}$ is simply the person-by-item matrix of 0s and 1s\\[4ex]
+
+\centering
+\begin{tabular}{ccccc}\hline
+person & item 1 & item 2 & item 3 & ...\\\hline
+    1  &     1  &     1  &     1  & ...  \\
+    2  &     1  &     1  &     0  & ...  \\
+    3  &     0  &     1  &     0  & ...  \\
+$\vdots$&$\vdots$&$\vdots$&$\vdots$\\
+   67  &     1  &     1  &     1  & ...  \\\hline
+\end{tabular}
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Guttman scales}
+Note that the Rasch model makes some strong assumptions about the data.\\[3ex]\pause
+
+Non-exhaustively, it assumes that
+\bi
+\i Only the person's ability and the item difficulty affect the proability of responding correctly
+\i The response on one item does not affect the response on any other item
+\i Items can be rank ordered in difficulty
+\i Participants can be rank ordered in ability
+\ei
+
+\end{frame}
+
+
+\newcommand{\rd}[1]{{\color{red}#1}}
+
+\begin{frame}[fragile]{Guttman scales}
+Those last two are part of the \textit{unidimensionality} assumption, which has a peculiar consequence\\[1ex]\pause
+
+Consider this segment of the data matrix:\\[3ex]
+
+\centering\begin{tabular}{ccc}
+\begin{tabular}{ccccc}\hline
+person & $I_1$ & $I_2$ & $I_3$ \\\hline
+    1  &     1  &     1  &     1    \\
+    2  &     1  &     1  &     0    \\
+    3  &     0  &     1  &     0   \\
+   67  &     1  &     1  &     1   \\\hline\\
+\end{tabular}&\pause$\rightarrow$&
+\begin{tabular}{ccccc}\hline
+person & $I_2$ & $I_1$ & $I_3$ \\\hline
+    3  &     1  & \rd{0} & \rd{0}  \\
+    2  &     1  &     1  & \rd{0}  \\
+    1  &     1  &     1  &     1   \\
+   67  &     1  &     1  &     1   \\\hline\\
+\end{tabular}
+\end{tabular}\flushleft
+
+If the unidimensionality assumption holds, the data matrix can be rearranged so that all its zeros are in a triangle
+
+\end{frame}
+
+\begin{frame}[fragile]{Guttman scales}
+
+If this rearrangement is possible, then we can combine the item scores into a single sum score, which can then be interpreted as a unidimensional measure of the ability of the respondents.\\[3ex]
+
+\centering
+\begin{tabular}{ccccc}\hline
+person & $I_2$ & $I_1$ & $I_3$ &   Sum Score\\\hline
+    3  &     1  & \rd{0} & \rd{0}    & 1 \\
+    2  &     1  &     1  & \rd{0}    & 2\\
+    1  &     1  &     1  &     1     & 3\\
+   67  &     1  &     1  &     1     & 3\\\hline\\
+\end{tabular}\pause\flushleft
+
+A sum score that meets this condition is called a \textit{Guttman scale}
+
+\end{frame}
+
+\begin{frame}[fragile]{Guttman scales}
+
+In practice, any data set large enough will violate these assumptions somewhat, and so the sum score is not a `perfect' Guttman scale\\[3ex]\pause
+
+The most common reasons for violation of these assumptions are:
+\bi
+\i There may be randomness in the data (e.g., respondents `lapse' and choose the wrong answer due to distraction), or
+\i The underlying construct may really be multidimensional (e.g., a math test that uses difficult phrases is really also a test of English comprehension), or
+\i The order of the items causes sequential effects (some examples in \citeNP{moore2002measuring})
+\ei
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Item response theory}
+The Rasch model, $P(X_{ip}) = \text{ilogit}(\theta_p - \beta_i)$, is a relatively simple IRT model.  In psychometric circles, it is often called the \textit{one-parameter logistic model} or simply \emph{1PL}\pause
+
+Some of its relatives are:
+\bi
+\i \emph{2PL}: $P(X_{ip}) = \text{ilogit}(\alpha_i\left(\theta_p - \beta_i)\right)$\\
+Here, $\alpha_i$ is a discriminability index that captures how important the item $i$ is for measuring the construct
+\i \emph{3PL}: $P(X_{ip}) = \gamma_i + (1-\gamma_i) \times \text{ilogit}(\alpha_i\left(\theta_p - \beta_i)\right)$\\
+Here, $\gamma_i$ is a guessing parameter that captures how well a participant could do by guessing the answer
+\i \emph{Explanatory item response models}: $P(X_{ip}) = \text{ilogit}\left(\theta_p - \gamma W_i\right)$\\
+Here, $\beta_i$ is replaced by an expression based on some predictor $W$
+\ei
+
+\end{frame}
+
+
+\begin{frame}[allowframebreaks]{References}
+\bibliographystyle{apacite}
+\bibliography{irt.bib}
+\end{frame}
+
+
+
+\maketitle
+
+\end{document}
